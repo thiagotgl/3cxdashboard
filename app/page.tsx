@@ -12,43 +12,59 @@ import {
   CartesianGrid,
 } from "recharts";
 
-export default function Page() {
-  const [data, setData] = useState<any[]>([]);
+export default function Dashboard() {
+  const [calls, setCalls] = useState<any[]>([]);
 
-  function handleFile(e: any) {
+  function loadCSV(e: any) {
     const file = e.target.files[0];
 
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: (result) => {
-        setData(result.data);
+        console.log(result.data);
+        setCalls(result.data);
       },
     });
   }
 
   const stats = useMemo(() => {
-    const total = data.length;
+    if (!calls.length) return null;
 
-    const answered = data.filter(
-      (c) => c.Status?.toLowerCase() === "answered"
+    const statusField =
+      Object.keys(calls[0]).find((k) =>
+        k.toLowerCase().includes("status")
+      ) || "Status";
+
+    const fromField =
+      Object.keys(calls[0]).find((k) =>
+        k.toLowerCase().includes("from")
+      ) || "From";
+
+    const dateField =
+      Object.keys(calls[0]).find((k) =>
+        k.toLowerCase().includes("start")
+      ) || "Start Time";
+
+    const total = calls.length;
+
+    const answered = calls.filter((c) =>
+      c[statusField]?.toLowerCase()?.includes("answer")
     ).length;
 
-    const missed = data.filter(
-      (c) => c.Status?.toLowerCase() === "missed"
+    const missed = calls.filter((c) =>
+      c[statusField]?.toLowerCase()?.includes("miss")
     ).length;
 
-    // chamadas por ramal
     const byExtension = Object.values(
-      data.reduce((acc: any, call: any) => {
-        const ext = call.From || "Unknown";
+      calls.reduce((acc: any, call: any) => {
+        const ext = call[fromField] || "Unknown";
 
-        if (!acc[ext]) {
+        if (!acc[ext])
           acc[ext] = {
             name: ext,
             total: 0,
           };
-        }
 
         acc[ext].total++;
 
@@ -56,19 +72,19 @@ export default function Page() {
       }, {})
     );
 
-    // chamadas por dia
     const byDay = Object.values(
-      data.reduce((acc: any, call: any) => {
-        const date = call["Start Time"]?.split(" ")[0];
+      calls.reduce((acc: any, call: any) => {
+        const raw = call[dateField];
 
-        if (!date) return acc;
+        if (!raw) return acc;
 
-        if (!acc[date]) {
+        const date = raw.split(" ")[0];
+
+        if (!acc[date])
           acc[date] = {
             date,
             total: 0,
           };
-        }
 
         acc[date].total++;
 
@@ -83,76 +99,47 @@ export default function Page() {
       byExtension,
       byDay,
     };
-  }, [data]);
+  }, [calls]);
 
   return (
     <div style={{ padding: 30, fontFamily: "Arial" }}>
-      <h1>Dashboard 3CX</h1>
+      <h1>3CX Professional Dashboard</h1>
 
-      <input type="file" accept=".csv" onChange={handleFile} />
+      <input type="file" accept=".csv" onChange={loadCSV} />
 
-      {/* CARDS */}
-      <div style={{ display: "flex", gap: 20, marginTop: 20 }}>
-        <Card title="Total chamadas" value={stats.total} />
-        <Card title="Atendidas" value={stats.answered} />
-        <Card title="Perdidas" value={stats.missed} />
-      </div>
+      {stats && (
+        <>
+          <div style={{ display: "flex", gap: 20, marginTop: 20 }}>
+            <Card title="Total" value={stats.total} />
+            <Card title="Atendidas" value={stats.answered} />
+            <Card title="Perdidas" value={stats.missed} />
+          </div>
 
-      {/* GRÁFICO POR RAMAL */}
-      <h2 style={{ marginTop: 40 }}>Chamadas por ramal</h2>
+          <h2 style={{ marginTop: 40 }}>Por Ramal</h2>
 
-      <div style={{ width: "100%", height: 300 }}>
-        <ResponsiveContainer>
-          <BarChart data={stats.byExtension}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="total" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          <Chart data={stats.byExtension} x="name" y="total" />
 
-      {/* GRÁFICO POR DIA */}
-      <h2 style={{ marginTop: 40 }}>Chamadas por dia</h2>
+          <h2 style={{ marginTop: 40 }}>Por Dia</h2>
 
-      <div style={{ width: "100%", height: 300 }}>
-        <ResponsiveContainer>
-          <BarChart data={stats.byDay}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="total" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          <Chart data={stats.byDay} x="date" y="total" />
+        </>
+      )}
+    </div>
+  );
+}
 
-      {/* TABELA */}
-      <h2 style={{ marginTop: 40 }}>Lista de chamadas</h2>
-
-      <table border={1} cellPadding={5}>
-        <thead>
-          <tr>
-            <th>From</th>
-            <th>To</th>
-            <th>Status</th>
-            <th>Start Time</th>
-            <th>Talk Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.slice(0, 50).map((call, i) => (
-            <tr key={i}>
-              <td>{call.From}</td>
-              <td>{call.To}</td>
-              <td>{call.Status}</td>
-              <td>{call["Start Time"]}</td>
-              <td>{call["Talk Time"]}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+function Chart({ data, x, y }: any) {
+  return (
+    <div style={{ width: "100%", height: 300 }}>
+      <ResponsiveContainer>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey={x} />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey={y} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -161,14 +148,14 @@ function Card({ title, value }: any) {
   return (
     <div
       style={{
-        padding: 20,
         background: "#f4f4f4",
+        padding: 20,
         borderRadius: 8,
         minWidth: 150,
       }}
     >
       <div>{title}</div>
-      <div style={{ fontSize: 24, fontWeight: "bold" }}>{value}</div>
+      <div style={{ fontSize: 28, fontWeight: "bold" }}>{value}</div>
     </div>
   );
 }
