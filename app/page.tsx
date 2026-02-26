@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -5,8 +6,6 @@ import Papa from "papaparse";
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -17,84 +16,109 @@ import {
 export default function Dashboard() {
   const [queueData, setQueueData] = useState<any[]>([]);
   const [callData, setCallData] = useState<any[]>([]);
-  const [selectedQueue, setSelectedQueue] = useState("ALL");
   const [selectedExt, setSelectedExt] = useState("ALL");
 
+  // carregar csv estatísticas da fila
   function loadQueueCSV(e: any) {
     Papa.parse(e.target.files[0], {
       header: true,
       skipEmptyLines: true,
-      complete: (result) => setQueueData(result.data),
+      complete: (result) => {
+        setQueueData(result.data as any[]);
+      },
     });
   }
 
+  // carregar csv ligações gerais
   function loadCallCSV(e: any) {
     Papa.parse(e.target.files[0], {
       header: true,
       skipEmptyLines: true,
-      complete: (result) => setCallData(result.data),
+      complete: (result) => {
+        setCallData(result.data as any[]);
+      },
     });
   }
 
+  // lista de ramais
   const extensions = useMemo(() => {
-    return [...new Set(callData.map((c) => c.From))];
+    return Array.from(
+      new Set(callData.map((c: any) => c.From))
+    ).filter(Boolean);
   }, [callData]);
 
-  const queues = useMemo(() => {
-    return [...new Set(queueData.map((q) => q.Queue))];
-  }, [queueData]);
-
+  // filtrar chamadas
   const filteredCalls = useMemo(() => {
-    return callData.filter((c) => {
-      if (selectedExt !== "ALL" && c.From !== selectedExt) return false;
-      return true;
-    });
+    if (selectedExt === "ALL") return callData;
+
+    return callData.filter(
+      (c: any) => c.From === selectedExt
+    );
   }, [callData, selectedExt]);
 
+  // estatísticas
   const stats = useMemo(() => {
     const total = filteredCalls.length;
 
-    const answered = filteredCalls.filter((c) =>
-      c.Status?.includes("Answered")
+    const answered = filteredCalls.filter((c: any) =>
+      c.Status?.toLowerCase().includes("answered")
     ).length;
 
-    const missed = filteredCalls.filter((c) =>
-      c.Status?.includes("Missed")
+    const missed = filteredCalls.filter((c: any) =>
+      c.Status?.toLowerCase().includes("missed")
     ).length;
 
-    const byExt = Object.values(
-      filteredCalls.reduce((acc: any, c: any) => {
-        if (!acc[c.From])
-          acc[c.From] = { name: c.From, total: 0 };
+    // por ramal
+    const byExtMap: any = {};
 
-        acc[c.From].total++;
-        return acc;
-      }, {})
-    );
+    filteredCalls.forEach((c: any) => {
+      const ext = c.From || "Unknown";
 
-    const byQueue = queueData.map((q) => ({
-      name: q.Queue,
-      total: Number(q["Calls Total"]),
+      if (!byExtMap[ext])
+        byExtMap[ext] = { name: ext, total: 0 };
+
+      byExtMap[ext].total++;
+    });
+
+    const byExt = Object.values(byExtMap);
+
+    // por fila
+    const byQueue = queueData.map((q: any) => ({
+      name: q.Queue || "Unknown",
+      total: Number(q["Calls Total"]) || 0,
     }));
 
-    return { total, answered, missed, byExt, byQueue };
+    return {
+      total,
+      answered,
+      missed,
+      byExt,
+      byQueue,
+    };
   }, [filteredCalls, queueData]);
 
   return (
-    <div style={{ padding: 20, background: "#0b0f19", color: "white" }}>
+    <div style={containerStyle}>
 
-      <h1>3CX Grafana Dashboard</h1>
+      <h1>3CX Dashboard (Grafana Style)</h1>
 
       {/* upload */}
-      <div style={{ display: "flex", gap: 10 }}>
-        <Upload label="Estatísticas da fila" onChange={loadQueueCSV} />
-        <Upload label="Ligações gerais" onChange={loadCallCSV} />
+      <div style={uploadContainer}>
+        <Upload
+          label="📊 Estatísticas detalhadas da fila"
+          onChange={loadQueueCSV}
+        />
+
+        <Upload
+          label="📞 Ligações gerais"
+          onChange={loadCallCSV}
+        />
       </div>
 
-      {/* filtros */}
-      <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+      {/* filtro */}
+      <div style={{ marginTop: 20 }}>
         <Select
-          label="Ramal"
+          label="Filtrar por ramal"
           options={extensions}
           value={selectedExt}
           onChange={setSelectedExt}
@@ -102,14 +126,15 @@ export default function Dashboard() {
       </div>
 
       {/* cards */}
-      <div style={{ display: "flex", gap: 20, marginTop: 20 }}>
-        <Card title="Total" value={stats.total} />
+      <div style={cardContainer}>
+        <Card title="Total Calls" value={stats.total} />
         <Card title="Answered" value={stats.answered} />
         <Card title="Missed" value={stats.missed} />
       </div>
 
       {/* gráficos */}
-      <Grid>
+      <div style={grid}>
+
         <Panel title="Calls per Extension">
           <Chart data={stats.byExt} />
         </Panel>
@@ -117,11 +142,14 @@ export default function Dashboard() {
         <Panel title="Calls per Queue">
           <Chart data={stats.byQueue} />
         </Panel>
-      </Grid>
+
+      </div>
 
     </div>
   );
 }
+
+/* COMPONENTES */
 
 function Upload({ label, onChange }: any) {
   return (
@@ -140,6 +168,7 @@ function Select({ label, options, value, onChange }: any) {
       style={selectStyle}
     >
       <option value="ALL">{label}</option>
+
       {options.map((o: any) => (
         <option key={o}>{o}</option>
       ))}
@@ -147,17 +176,11 @@ function Select({ label, options, value, onChange }: any) {
   );
 }
 
-function Grid({ children }: any) {
+function Card({ title, value }: any) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 20,
-        marginTop: 20,
-      }}
-    >
-      {children}
+    <div style={cardStyle}>
+      <div>{title}</div>
+      <h2>{value}</h2>
     </div>
   );
 }
@@ -167,15 +190,6 @@ function Panel({ title, children }: any) {
     <div style={panelStyle}>
       <h3>{title}</h3>
       {children}
-    </div>
-  );
-}
-
-function Card({ title, value }: any) {
-  return (
-    <div style={cardStyle}>
-      <div>{title}</div>
-      <h2>{value}</h2>
     </div>
   );
 }
@@ -194,6 +208,20 @@ function Chart({ data }: any) {
   );
 }
 
+/* ESTILO */
+
+const containerStyle = {
+  padding: 20,
+  background: "#0b0f19",
+  color: "white",
+  minHeight: "100vh",
+};
+
+const uploadContainer = {
+  display: "flex",
+  gap: 10,
+};
+
 const uploadStyle = {
   padding: 10,
   background: "#1f2937",
@@ -207,10 +235,10 @@ const selectStyle = {
   color: "white",
 };
 
-const panelStyle = {
-  background: "#111827",
-  padding: 20,
-  borderRadius: 8,
+const cardContainer = {
+  display: "flex",
+  gap: 20,
+  marginTop: 20,
 };
 
 const cardStyle = {
@@ -218,4 +246,17 @@ const cardStyle = {
   padding: 20,
   borderRadius: 8,
   minWidth: 150,
+};
+
+const grid = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 20,
+  marginTop: 20,
+};
+
+const panelStyle = {
+  background: "#111827",
+  padding: 20,
+  borderRadius: 8,
 };
