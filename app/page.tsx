@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Papa from "papaparse";
 import {
   BarChart,
@@ -26,16 +27,40 @@ export default function Page() {
     });
   }
 
-  const total = data.length;
+  const stats = useMemo(() => {
+    const total = data.length;
 
-  const perExt = Object.values(
-    data.reduce((acc: any, row: any) => {
-      const ext = row.From || "Unknown";
-      acc[ext] = acc[ext] || { name: ext, value: 0 };
-      acc[ext].value++;
-      return acc;
-    }, {})
-  );
+    const answered = data.filter(
+      (c) => c.Status?.toLowerCase() === "answered"
+    ).length;
+
+    const missed = data.filter(
+      (c) => c.Status?.toLowerCase() === "missed"
+    ).length;
+
+    const byExtension = Object.values(
+      data.reduce((acc: any, call: any) => {
+        const ext = call.From || "Unknown";
+
+        if (!acc[ext])
+          acc[ext] = {
+            name: ext,
+            total: 0,
+          };
+
+        acc[ext].total++;
+
+        return acc;
+      }, {})
+    );
+
+    return {
+      total,
+      answered,
+      missed,
+      byExtension,
+    };
+  }, [data]);
 
   return (
     <div style={{ padding: 20 }}>
@@ -43,15 +68,19 @@ export default function Page() {
 
       <input type="file" accept=".csv" onChange={handleFile} />
 
-      <h2>Total chamadas: {total}</h2>
+      <div style={{ marginTop: 20 }}>
+        <h3>Total chamadas: {stats.total}</h3>
+        <h3>Atendidas: {stats.answered}</h3>
+        <h3>Perdidas: {stats.missed}</h3>
+      </div>
 
       <div style={{ width: "100%", height: 400 }}>
         <ResponsiveContainer>
-          <BarChart data={perExt}>
+          <BarChart data={stats.byExtension}>
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="value" />
+            <Bar dataKey="total" />
           </BarChart>
         </ResponsiveContainer>
       </div>
