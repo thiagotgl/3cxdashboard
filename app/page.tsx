@@ -14,6 +14,7 @@ import {
 
 export default function Dashboard() {
   const [calls, setCalls] = useState<any[]>([]);
+  const [extensionFilter, setExtensionFilter] = useState("ALL");
 
   function loadCSV(e: any) {
     const file = e.target.files[0];
@@ -22,43 +23,74 @@ export default function Dashboard() {
       header: true,
       skipEmptyLines: true,
       complete: (result) => {
-        console.log(result.data);
         setCalls(result.data);
       },
     });
   }
 
-  const stats = useMemo(() => {
+  const fields = useMemo(() => {
     if (!calls.length) return null;
 
-    const statusField =
-      Object.keys(calls[0]).find((k) =>
-        k.toLowerCase().includes("status")
-      ) || "Status";
+    return {
+      status:
+        Object.keys(calls[0]).find((k) =>
+          k.toLowerCase().includes("status")
+        ) || "Status",
 
-    const fromField =
-      Object.keys(calls[0]).find((k) =>
-        k.toLowerCase().includes("from")
-      ) || "From";
+      from:
+        Object.keys(calls[0]).find((k) =>
+          k.toLowerCase().includes("from")
+        ) || "From",
 
-    const dateField =
-      Object.keys(calls[0]).find((k) =>
-        k.toLowerCase().includes("start")
-      ) || "Start Time";
+      date:
+        Object.keys(calls[0]).find((k) =>
+          k.toLowerCase().includes("start")
+        ) || "Start Time",
 
-    const total = calls.length;
+      talk:
+        Object.keys(calls[0]).find((k) =>
+          k.toLowerCase().includes("talk")
+        ) || "Talk Time",
+    };
+  }, [calls]);
 
-    const answered = calls.filter((c) =>
-      c[statusField]?.toLowerCase()?.includes("answer")
+  const filteredCalls = useMemo(() => {
+    if (!fields) return [];
+
+    if (extensionFilter === "ALL") return calls;
+
+    return calls.filter(
+      (c) => c[fields.from] === extensionFilter
+    );
+  }, [calls, extensionFilter, fields]);
+
+  const extensions = useMemo(() => {
+    if (!fields) return [];
+
+    return [
+      "ALL",
+      ...Array.from(
+        new Set(calls.map((c) => c[fields.from]))
+      ),
+    ];
+  }, [calls, fields]);
+
+  const stats = useMemo(() => {
+    if (!fields) return null;
+
+    const total = filteredCalls.length;
+
+    const answered = filteredCalls.filter((c) =>
+      c[fields.status]?.toLowerCase().includes("answer")
     ).length;
 
-    const missed = calls.filter((c) =>
-      c[statusField]?.toLowerCase()?.includes("miss")
+    const missed = filteredCalls.filter((c) =>
+      c[fields.status]?.toLowerCase().includes("miss")
     ).length;
 
     const byExtension = Object.values(
-      calls.reduce((acc: any, call: any) => {
-        const ext = call[fromField] || "Unknown";
+      filteredCalls.reduce((acc: any, call: any) => {
+        const ext = call[fields.from];
 
         if (!acc[ext])
           acc[ext] = {
@@ -73,12 +105,10 @@ export default function Dashboard() {
     );
 
     const byDay = Object.values(
-      calls.reduce((acc: any, call: any) => {
-        const raw = call[dateField];
+      filteredCalls.reduce((acc: any, call: any) => {
+        const date = call[fields.date]?.split(" ")[0];
 
-        if (!raw) return acc;
-
-        const date = raw.split(" ")[0];
+        if (!date) return acc;
 
         if (!acc[date])
           acc[date] = {
@@ -99,7 +129,7 @@ export default function Dashboard() {
       byExtension,
       byDay,
     };
-  }, [calls]);
+  }, [filteredCalls, fields]);
 
   return (
     <div style={{ padding: 30, fontFamily: "Arial" }}>
@@ -107,21 +137,77 @@ export default function Dashboard() {
 
       <input type="file" accept=".csv" onChange={loadCSV} />
 
-      {stats && (
+      {calls.length > 0 && (
         <>
-          <div style={{ display: "flex", gap: 20, marginTop: 20 }}>
-            <Card title="Total" value={stats.total} />
-            <Card title="Atendidas" value={stats.answered} />
-            <Card title="Perdidas" value={stats.missed} />
+          {/* FILTRO */}
+          <div style={{ marginTop: 20 }}>
+            <label>Filtrar por Ramal: </label>
+
+            <select
+              value={extensionFilter}
+              onChange={(e) =>
+                setExtensionFilter(e.target.value)
+              }
+            >
+              {extensions.map((ext) => (
+                <option key={ext}>{ext}</option>
+              ))}
+            </select>
           </div>
 
-          <h2 style={{ marginTop: 40 }}>Por Ramal</h2>
+          {/* CARDS */}
+          <div
+            style={{
+              display: "flex",
+              gap: 20,
+              marginTop: 20,
+            }}
+          >
+            <Card title="Total" value={stats?.total} />
+            <Card title="Atendidas" value={stats?.answered} />
+            <Card title="Perdidas" value={stats?.missed} />
+          </div>
 
-          <Chart data={stats.byExtension} x="name" y="total" />
+          {/* GRÁFICO RAMAL */}
+          <h2 style={{ marginTop: 40 }}>
+            Chamadas por Ramal
+          </h2>
 
-          <h2 style={{ marginTop: 40 }}>Por Dia</h2>
+          <Chart data={stats?.byExtension} x="name" y="total" />
 
-          <Chart data={stats.byDay} x="date" y="total" />
+          {/* GRÁFICO DIA */}
+          <h2 style={{ marginTop: 40 }}>
+            Chamadas por Dia
+          </h2>
+
+          <Chart data={stats?.byDay} x="date" y="total" />
+
+          {/* TABELA */}
+          <h2 style={{ marginTop: 40 }}>
+            Lista de chamadas
+          </h2>
+
+          <table border={1} cellPadding={5}>
+            <thead>
+              <tr>
+                <th>From</th>
+                <th>Status</th>
+                <th>Data</th>
+                <th>Talk Time</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredCalls.slice(0, 50).map((call, i) => (
+                <tr key={i}>
+                  <td>{call[fields.from]}</td>
+                  <td>{call[fields.status]}</td>
+                  <td>{call[fields.date]}</td>
+                  <td>{call[fields.talk]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </>
       )}
     </div>
@@ -155,7 +241,9 @@ function Card({ title, value }: any) {
       }}
     >
       <div>{title}</div>
-      <div style={{ fontSize: 28, fontWeight: "bold" }}>{value}</div>
+      <div style={{ fontSize: 28, fontWeight: "bold" }}>
+        {value}
+      </div>
     </div>
   );
 }
