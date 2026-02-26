@@ -1,7 +1,6 @@
 {
   "name": "3cx-dashboard",
   "private": true,
-  "version": "0.1.0",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
@@ -9,10 +8,14 @@
   },
   "dependencies": {
     "next": "14.2.5",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "papaparse": "^5.4.1",
-    "recharts": "^2.12.7",
-    "date-fns": "^3.6.0"
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "papaparse": "5.4.1",
+    "recharts": "2.12.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "@types/react": "^18.2.66",
+    "@types/node": "^20.11.30"
   }
 }
