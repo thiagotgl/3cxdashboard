@@ -187,17 +187,17 @@ const rankingPorTta =
         </Pie>
 
         {/* Tooltip melhorado */}
-        <Tooltip
-          formatter={(value, name) => [
-            value.toLocaleString(),
-            name
-          ]}
-          contentStyle={{
-            borderRadius: "8px",
-            border: "1px solid #e5e7eb",
-            fontSize: "14px"
-          }}
-        />
+<Tooltip
+  formatter={(value, name) => [
+    Number(value ?? 0).toLocaleString(),
+    String(name ?? "")
+  ]}
+  contentStyle={{
+    borderRadius: "8px",
+    border: "1px solid #e5e7eb",
+    fontSize: "14px"
+  }}
+/>
 
       </PieChart>
 
