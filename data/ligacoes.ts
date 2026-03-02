@@ -13,4 +13,5 @@ export const ligacoesPorMes = [
   { ano: 2025, mes: "DEZEMBRO", recebidas: 7454, atendidas: 6557, naoAtendidas: 897 },
 
   { ano: 2026, mes: "JANEIRO", recebidas: 11931, atendidas: 10606, naoAtendidas: 1325 },
+  { ano: 2026, mes: "FEVEREIRO", recebidas: 8802, atendidas: 8275, naoAtendidas: 527 },
 ]
