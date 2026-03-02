@@ -102,49 +102,6 @@ const rankingPorTma =
 const rankingPorTta =
   [...rankingAgentes].sort((a: any, b: any) => b.tta - a.tta)
 
-  // ----------------------------
-// CALCULO DE CRESCIMENTO
-// ----------------------------
-
-const mesesOrdenados = [
-  "JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO",
-  "JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"
-]
-
-function calcularCrescimento(nome: string) {
-
-  if (mesSelecionado === "TODOS") return null
-
-  const indexMesAtual = mesesOrdenados.indexOf(mesSelecionado)
-
-  if (indexMesAtual <= 0) return null
-
-  const mesAnterior = mesesOrdenados[indexMesAtual - 1]
-
-  const atual = agentesRaw.find(
-    a =>
-      a.nome === nome &&
-      a.mes === mesSelecionado &&
-      a.ano === anoSelecionado
-  )
-
-  const anterior = agentesRaw.find(
-    a =>
-      a.nome === nome &&
-      a.mes === mesAnterior &&
-      a.ano === anoSelecionado
-  )
-
-  if (!atual || !anterior || anterior.atendimentos === 0)
-    return null
-
-  const crescimento =
-    ((atual.atendimentos - anterior.atendimentos) /
-      anterior.atendimentos) * 100
-
-  return crescimento
-}
-
 
   return (
     <div className="min-h-screen bg-zinc-100 p-10 text-zinc-800">
@@ -406,39 +363,15 @@ function calcularCrescimento(nome: string) {
 
       <Tooltip />
 
-<Bar
-  dataKey="atendimentos"
-  fill="#6366f1"
-label={(props: any) => {
-
-  const crescimento = calcularCrescimento(props?.payload?.nome)
-
-  return (
-    <text
-      x={(props?.x ?? 0) + (props?.width ?? 0) + 5}
-      y={(props?.y ?? 0) + (props?.height ?? 0) / 2}
-      fill={
-        typeof crescimento === "number"
-          ? crescimento >= 0
-            ? "#16a34a"
-            : "#dc2626"
-          : "#312e81"
-      }
-      fontWeight="bold"
-      fontSize="12"
-      alignmentBaseline="middle"
-    >
-      {(props?.value ?? 0)}
-      {typeof crescimento === "number"
-        ? crescimento >= 0
-          ? ` ▲ +${crescimento.toFixed(1)}%`
-          : ` ▼ ${crescimento.toFixed(1)}%`
-        : ""}
-    </text>
-  )
-}}
-  
-  />
+      <Bar
+        dataKey="atendimentos"
+        fill="#6366f1"
+        label={{
+          position: "right",
+          fill: "#312e81",
+          fontWeight: 600
+        }}
+      />
 
     </BarChart>
 
