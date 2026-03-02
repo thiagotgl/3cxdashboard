@@ -409,42 +409,36 @@ function calcularCrescimento(nome: string) {
 <Bar
   dataKey="atendimentos"
   fill="#6366f1"
-  label={(props: any) => {
+label={(props: any) => {
 
-    const crescimento = calcularCrescimento(props.payload.nome)
+  const crescimento = calcularCrescimento(props?.payload?.nome)
 
-    let textoCrescimento = ""
-
-    if (crescimento !== null) {
-
-      const valor = crescimento.toFixed(1)
-
-      textoCrescimento =
-        crescimento >= 0
-          ? ` ▲ +${valor}%`
-          : ` ▼ ${valor}%`
-    }
-
-    return (
-      <text
-        x={props.x + props.width + 5}
-        y={props.y + props.height / 2}
-        fill={
-          crescimento === null
-            ? "#312e81"
-            : crescimento >= 0
-              ? "#16a34a"
-              : "#dc2626"
-        }
-        fontWeight="bold"
-        fontSize="12"
-        alignmentBaseline="middle"
-      >
-        {props.value}{textoCrescimento}
-      </text>
-    )
-  }}
-/>
+  return (
+    <text
+      x={(props?.x ?? 0) + (props?.width ?? 0) + 5}
+      y={(props?.y ?? 0) + (props?.height ?? 0) / 2}
+      fill={
+        typeof crescimento === "number"
+          ? crescimento >= 0
+            ? "#16a34a"
+            : "#dc2626"
+          : "#312e81"
+      }
+      fontWeight="bold"
+      fontSize="12"
+      alignmentBaseline="middle"
+    >
+      {(props?.value ?? 0)}
+      {typeof crescimento === "number"
+        ? crescimento >= 0
+          ? ` ▲ +${crescimento.toFixed(1)}%`
+          : ` ▼ ${crescimento.toFixed(1)}%`
+        : ""}
+    </text>
+  )
+}}
+  
+  />
 
     </BarChart>
 
