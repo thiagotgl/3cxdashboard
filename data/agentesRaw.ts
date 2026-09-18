@@ -157,6 +157,16 @@ export const agentesRaw = [
 { nome: "9906-NAC06", atendimentos: 667,  tta: 1865.25, tma: 2.80, mes: "MARÇO", ano: 2026 },
 { nome: "9907-NAC07", atendimentos: 0,    tta: 0.00,    tma: 0.00, mes: "MARÇO", ano: 2026 },
 { nome: "9908-NAC08", atendimentos: 1584, tta: 4130.78, tma: 2.61, mes: "MARÇO", ano: 2026 },
+
+// ABRIL
+{ nome: "9901-NAC01", atendimentos: 1585, tta: 5219.87, tma: 3.29, mes: "ABRIL", ano: 2026 },
+{ nome: "9902-NAC02", atendimentos: 2210, tta: 4995.27, tma: 2.26, mes: "ABRIL", ano: 2026 },
+{ nome: "9903-NAC03", atendimentos: 263,  tta: 1238.23, tma: 4.71, mes: "ABRIL", ano: 2026 },
+{ nome: "9904-NAC04", atendimentos: 836,  tta: 2717.28, tma: 3.25, mes: "ABRIL", ano: 2026 },
+{ nome: "9905-NAC05", atendimentos: 991,  tta: 2017.05, tma: 2.04, mes: "ABRIL", ano: 2026 },
+{ nome: "9906-NAC06", atendimentos: 889,  tta: 2629.10, tma: 2.96, mes: "ABRIL", ano: 2026 },
+{ nome: "9907-NAC07", atendimentos: 114,  tta: 295.53,  tma: 2.59, mes: "ABRIL", ano: 2026 },
+{ nome: "9908-NAC08", atendimentos: 1310, tta: 3103.90, tma: 2.37, mes: "ABRIL", ano: 2026 },
   
 // AGOSTO
 { nome: "9901-NAC01", atendimentos: 1292, tta: 3492.57, tma: 2.70, mes: "AGOSTO", ano: 2026 },
