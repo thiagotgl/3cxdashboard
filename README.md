@@ -2,6 +2,7 @@ Os relatorio são:
 
 * Visão geral do Desempenho da Fila
 pegar a primeira linha para o ligações.
+nesse mesmo relatorio eu pego o de agentes somente precisa organizar
 
 
 
