@@ -15,6 +15,7 @@ export const ligacoesPorMes = [
   { ano: 2026, mes: "JANEIRO", recebidas: 11931, atendidas: 10606, naoAtendidas: 1325 },
   { ano: 2026, mes: "FEVEREIRO", recebidas: 8802, atendidas: 8275, naoAtendidas: 527 },
   { ano: 2026, mes: "MARÇO", recebidas: 10099, atendidas: 9146, naoAtendidas: 953 },
+  { ano: 2026, mes: "ABRIL", recebidas: 9269, atendidas: 8198, naoAtendidas: 1071 },
 
 { ano: 2026, mes: "AGOSTO", recebidas: 8426, atendidas: 8168, naoAtendidas: 258 },
   
